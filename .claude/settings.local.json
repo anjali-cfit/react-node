@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install)",
+      "Bash(psql:*)",
+      "Bash(\"C:/Program Files/PostgreSQL/18/bin/psql\" -U postgres -c \"SELECT version\\(\\);\")",
+      "Bash(node:*)",
+      "Bash(npm run db:migrate:*)",
+      "Bash(npm run db:seed:*)",
+      "Bash(npm run dev:*)"
+    ]
+  }
+}
