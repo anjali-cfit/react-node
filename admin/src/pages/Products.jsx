@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus, Edit, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { productsApi } from '../lib/api';
+import { productsApi, getImageUrl } from '../lib/api';
 import LoadingSpinner from '../components/LoadingSpinner';
 
 export default function Products() {
@@ -90,7 +90,7 @@ export default function Products() {
                     <div className="flex items-center gap-3">
                       <img
                         src={
-                          product.imageUrl ||
+                          getImageUrl(product.imageUrl) ||
                           'https://via.placeholder.com/40x40?text=No+Image'
                         }
                         alt={product.name}

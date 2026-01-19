@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
 import swaggerUi from 'swagger-ui-express';
+import path from 'path';
 
 import { config } from './config/index.js';
 import { swaggerSpec } from './config/swagger.js';
@@ -12,8 +13,10 @@ import { notFoundHandler, errorHandler } from './middleware/errorHandler.js';
 
 const app = express();
 
-// Security middleware
-app.use(helmet());
+// Security middleware - configure helmet to allow cross-origin images
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
+}));
 
 // CORS configuration
 app.use(cors({
@@ -47,6 +50,9 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
   customCss: '.swagger-ui .topbar { display: none }',
   customSiteTitle: 'E-commerce API Documentation',
 }));
+
+// Serve uploaded files statically
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
 // Health check endpoint
 app.get('/health', (req, res) => {

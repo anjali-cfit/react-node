@@ -103,7 +103,7 @@ CREATE TABLE orders (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     total_amount DECIMAL(10, 2) NOT NULL CHECK (total_amount >= 0),
-    status VARCHAR(20) CHECK (status IN ('pending', 'processing', 'shipped', 'delivered', 'cancelled')) DEFAULT 'pending',
+    status VARCHAR(20) CHECK (status IN ('pending_payment', 'pending', 'processing', 'shipped', 'delivered', 'cancelled')) DEFAULT 'pending',
     shipping_address TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP

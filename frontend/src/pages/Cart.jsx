@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Trash2, Minus, Plus, ShoppingBag } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { cartApi } from '../lib/api';
+import { cartApi, getImageUrl, PLACEHOLDER_IMAGE } from '../lib/api';
 import { useCartStore } from '../store/cartStore';
 import LoadingSpinner from '../components/LoadingSpinner';
 
@@ -109,8 +109,8 @@ export default function Cart() {
                   <div className="h-20 w-20 flex-shrink-0 bg-gray-100 rounded-lg overflow-hidden">
                     <img
                       src={
-                        item.product.imageUrl ||
-                        'https://via.placeholder.com/80x80?text=No+Image'
+                        getImageUrl(item.product.imageUrl) ||
+                        PLACEHOLDER_IMAGE
                       }
                       alt={item.product.name}
                       className="h-full w-full object-cover"

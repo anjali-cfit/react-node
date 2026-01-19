@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { productController } from '../controllers/productController.js';
 import { validate } from '../middleware/validate.js';
 import { authenticate, isAdmin } from '../middleware/auth.js';
+import { upload } from '../middleware/upload.js';
 import {
   createProductValidation,
   updateProductValidation,
@@ -130,7 +131,7 @@ router.post(
   '/',
   authenticate,
   isAdmin,
-  validate(createProductValidation),
+  upload.single('image'),
   productController.create
 );
 
@@ -179,7 +180,7 @@ router.put(
   '/:id',
   authenticate,
   isAdmin,
-  validate(updateProductValidation),
+  upload.single('image'),
   productController.update
 );
 

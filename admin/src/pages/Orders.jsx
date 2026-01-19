@@ -1,19 +1,9 @@
-import { useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { ChevronRight, ChevronLeft } from 'lucide-react';
 import { ordersApi } from '../lib/api';
+import { ORDER_STATUS_COLORS, ORDER_STATUS_FILTERS } from '../../../shared/constants';
 import LoadingSpinner from '../components/LoadingSpinner';
-
-const statusColors = {
-  pending: 'bg-yellow-100 text-yellow-800',
-  processing: 'bg-blue-100 text-blue-800',
-  shipped: 'bg-purple-100 text-purple-800',
-  delivered: 'bg-green-100 text-green-800',
-  cancelled: 'bg-red-100 text-red-800',
-};
-
-const statuses = ['all', 'pending', 'processing', 'shipped', 'delivered', 'cancelled'];
 
 export default function Orders() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -58,9 +48,8 @@ export default function Orders() {
     <div>
       <h1 className="text-2xl font-bold text-gray-900 mb-6">Orders</h1>
 
-      {/* Status Filter */}
       <div className="mb-6 flex gap-2 flex-wrap">
-        {statuses.map((s) => (
+        {ORDER_STATUS_FILTERS.map((s) => (
           <button
             key={s}
             onClick={() => updateParams('status', s)}
@@ -79,27 +68,13 @@ export default function Orders() {
         <table className="w-full">
           <thead className="bg-gray-50">
             <tr>
-              <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">
-                Order ID
-              </th>
-              <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">
-                Customer
-              </th>
-              <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">
-                Date
-              </th>
-              <th className="text-center py-3 px-4 text-sm font-medium text-gray-500">
-                Status
-              </th>
-              <th className="text-center py-3 px-4 text-sm font-medium text-gray-500">
-                Items
-              </th>
-              <th className="text-right py-3 px-4 text-sm font-medium text-gray-500">
-                Total
-              </th>
-              <th className="text-right py-3 px-4 text-sm font-medium text-gray-500">
-                Actions
-              </th>
+              <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Order ID</th>
+              <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Customer</th>
+              <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Date</th>
+              <th className="text-center py-3 px-4 text-sm font-medium text-gray-500">Status</th>
+              <th className="text-center py-3 px-4 text-sm font-medium text-gray-500">Items</th>
+              <th className="text-right py-3 px-4 text-sm font-medium text-gray-500">Total</th>
+              <th className="text-right py-3 px-4 text-sm font-medium text-gray-500">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -112,14 +87,10 @@ export default function Orders() {
             ) : (
               orders.map((order) => (
                 <tr key={order.id} className="border-t">
-                  <td className="py-3 px-4 text-sm text-gray-900">
-                    #{order.id.slice(0, 8)}
-                  </td>
+                  <td className="py-3 px-4 text-sm text-gray-900">#{order.id.slice(0, 8)}</td>
                   <td className="py-3 px-4">
                     <div>
-                      <p className="text-sm font-medium text-gray-900">
-                        {order.userName}
-                      </p>
+                      <p className="text-sm font-medium text-gray-900">{order.userName}</p>
                       <p className="text-xs text-gray-500">{order.userEmail}</p>
                     </div>
                   </td>
@@ -129,7 +100,7 @@ export default function Orders() {
                   <td className="py-3 px-4 text-center">
                     <span
                       className={`px-2 py-1 rounded-full text-xs font-medium capitalize ${
-                        statusColors[order.status]
+                        ORDER_STATUS_COLORS[order.status] || 'bg-gray-100 text-gray-800'
                       }`}
                     >
                       {order.status}
@@ -156,7 +127,6 @@ export default function Orders() {
           </tbody>
         </table>
 
-        {/* Pagination */}
         {pagination.totalPages > 1 && (
           <div className="flex items-center justify-between px-4 py-3 border-t bg-gray-50">
             <p className="text-sm text-gray-500">

@@ -30,7 +30,6 @@ export const query = async (text, params) => {
   const result = await pool.query(text, params);
   const duration = Date.now() - start;
   if (config.nodeEnv === 'development') {
-    console.log('Executed query', { text: text.substring(0, 100), duration, rows: result.rowCount });
   }
   return result;
 };

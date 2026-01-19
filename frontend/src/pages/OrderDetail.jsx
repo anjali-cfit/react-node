@@ -1,15 +1,25 @@
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, Package } from 'lucide-react';
-import { ordersApi } from '../lib/api';
+import { ordersApi, PLACEHOLDER_IMAGE } from '../lib/api';
 import LoadingSpinner from '../components/LoadingSpinner';
 
 const statusColors = {
+  pending_payment: 'bg-orange-100 text-orange-800',
   pending: 'bg-yellow-100 text-yellow-800',
   processing: 'bg-blue-100 text-blue-800',
   shipped: 'bg-purple-100 text-purple-800',
   delivered: 'bg-green-100 text-green-800',
   cancelled: 'bg-red-100 text-red-800',
+};
+
+const statusLabels = {
+  pending_payment: 'Awaiting Payment',
+  pending: 'Pending',
+  processing: 'Processing',
+  shipped: 'Shipped',
+  delivered: 'Delivered',
+  cancelled: 'Cancelled',
 };
 
 const statusSteps = ['pending', 'processing', 'shipped', 'delivered'];
@@ -75,11 +85,11 @@ export default function OrderDetail() {
               </p>
             </div>
             <span
-              className={`px-4 py-2 rounded-full text-sm font-medium capitalize ${
-                statusColors[order.status]
+              className={`px-4 py-2 rounded-full text-sm font-medium ${
+                statusColors[order.status] || 'bg-gray-100 text-gray-800'
               }`}
             >
-              {order.status}
+              {statusLabels[order.status] || order.status}
             </span>
           </div>
         </div>
@@ -133,7 +143,7 @@ export default function OrderDetail() {
               <li key={item.id} className="py-4 flex items-center gap-4">
                 <div className="h-16 w-16 flex-shrink-0 bg-gray-100 rounded-lg overflow-hidden">
                   <img
-                    src={`https://via.placeholder.com/64x64?text=${item.productName.charAt(0)}`}
+                    src={PLACEHOLDER_IMAGE}
                     alt={item.productName}
                     className="h-full w-full object-cover"
                   />

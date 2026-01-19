@@ -1,37 +1,19 @@
-import axios from 'axios';
 import { useAuthStore } from '../store/authStore';
+import { createApiClient, getImageUrl as getImageUrlBase } from '../../../shared/apiUtils';
+export { PLACEHOLDER_IMAGE } from '../../../shared/constants';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const BASE_URL = API_URL.replace('/api', '');
 
-const api = axios.create({
+// Create configured API client
+const api = createApiClient({
   baseURL: API_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  getToken: () => useAuthStore.getState().token,
+  onUnauthorized: () => useAuthStore.getState().logout(),
 });
 
-// Request interceptor
-api.interceptors.request.use(
-  (config) => {
-    const token = useAuthStore.getState().token;
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
-
-// Response interceptor
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      useAuthStore.getState().logout();
-    }
-    return Promise.reject(error);
-  }
-);
+// Helper to get full image URL
+export const getImageUrl = (imageUrl) => getImageUrlBase(imageUrl, BASE_URL);
 
 // Auth API
 export const authApi = {
@@ -44,8 +26,12 @@ export const authApi = {
 export const productsApi = {
   getAll: (params) => api.get('/products', { params }),
   getById: (id) => api.get(`/products/${id}`),
-  create: (data) => api.post('/products', data),
-  update: (id, data) => api.put(`/products/${id}`, data),
+  create: (formData) => api.post('/products', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  }),
+  update: (id, formData) => api.put(`/products/${id}`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  }),
   delete: (id) => api.delete(`/products/${id}`),
 };
 

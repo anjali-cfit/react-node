@@ -1,37 +1,19 @@
-import axios from 'axios';
 import { useAuthStore } from '../store/authStore';
+import { createApiClient, getImageUrl as getImageUrlBase } from '../../../shared/apiUtils';
+export { PLACEHOLDER_IMAGE } from '../../../shared/constants';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const BASE_URL = API_URL.replace('/api', '');
 
-const api = axios.create({
+// Create configured API client
+const api = createApiClient({
   baseURL: API_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  getToken: () => useAuthStore.getState().token,
+  onUnauthorized: () => useAuthStore.getState().logout(),
 });
 
-// Request interceptor to add auth token
-api.interceptors.request.use(
-  (config) => {
-    const token = useAuthStore.getState().token;
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
-
-// Response interceptor to handle errors
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      useAuthStore.getState().logout();
-    }
-    return Promise.reject(error);
-  }
-);
+// Helper to get full image URL
+export const getImageUrl = (imageUrl) => getImageUrlBase(imageUrl, BASE_URL);
 
 // Auth API
 export const authApi = {
@@ -66,6 +48,14 @@ export const ordersApi = {
   create: (shippingAddress) => api.post('/orders', { shippingAddress }),
   getMyOrders: (params) => api.get('/orders/my-orders', { params }),
   getById: (id) => api.get(`/orders/${id}`),
+};
+
+// Payment API
+export const paymentApi = {
+  createCheckoutSession: (shippingAddress) => api.post('/payment/create-checkout-session', { shippingAddress }),
+  handleSuccess: (sessionId) => api.get('/payment/success', { params: { session_id: sessionId } }),
+  handleCancel: (orderId) => api.get('/payment/cancel', { params: { order_id: orderId } }),
+  getStatus: (sessionId) => api.get('/payment/status', { params: { session_id: sessionId } }),
 };
 
 export default api;

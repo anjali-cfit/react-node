@@ -1,5 +1,13 @@
 import { query } from '../config/database.js';
 import { v4 as uuidv4 } from 'uuid';
+import { buildUpdateFields } from '../utils/repositoryHelpers.js';
+
+// Field mapping for category updates
+const CATEGORY_FIELD_MAP = {
+  name: 'name',
+  description: 'description',
+  isActive: 'is_active',
+};
 
 export const categoryRepository = {
   async create(categoryData) {
@@ -7,9 +15,7 @@ export const categoryRepository = {
     const id = uuidv4();
 
     const result = await query(
-      `INSERT INTO categories (id, name, description)
-       VALUES ($1, $2, $3)
-       RETURNING *`,
+      `INSERT INTO categories (id, name, description) VALUES ($1, $2, $3) RETURNING *`,
       [id, name, description]
     );
 
@@ -17,57 +23,25 @@ export const categoryRepository = {
   },
 
   async findById(id) {
-    const result = await query(
-      'SELECT * FROM categories WHERE id = $1',
-      [id]
-    );
+    const result = await query('SELECT * FROM categories WHERE id = $1', [id]);
     return result.rows[0];
   },
 
   async findByName(name) {
-    const result = await query(
-      'SELECT * FROM categories WHERE name = $1',
-      [name]
-    );
+    const result = await query('SELECT * FROM categories WHERE name = $1', [name]);
     return result.rows[0];
   },
 
   async findAll(options = {}) {
     const { includeInactive = false } = options;
+    const conditions = includeInactive ? '' : 'WHERE is_active = true';
 
-    let queryText = 'SELECT * FROM categories';
-    const params = [];
-
-    if (!includeInactive) {
-      queryText += ' WHERE is_active = true';
-    }
-
-    queryText += ' ORDER BY name ASC';
-
-    const result = await query(queryText, params);
+    const result = await query(`SELECT * FROM categories ${conditions} ORDER BY name ASC`);
     return result.rows;
   },
 
   async update(id, categoryData) {
-    const { name, description, isActive } = categoryData;
-    const fields = [];
-    const values = [];
-    let paramIndex = 1;
-
-    if (name !== undefined) {
-      fields.push(`name = $${paramIndex++}`);
-      values.push(name);
-    }
-
-    if (description !== undefined) {
-      fields.push(`description = $${paramIndex++}`);
-      values.push(description);
-    }
-
-    if (isActive !== undefined) {
-      fields.push(`is_active = $${paramIndex++}`);
-      values.push(isActive);
-    }
+    const { fields, values, paramIndex } = buildUpdateFields(categoryData, CATEGORY_FIELD_MAP);
 
     if (fields.length === 0) {
       return this.findById(id);
@@ -76,8 +50,7 @@ export const categoryRepository = {
     values.push(id);
 
     const result = await query(
-      `UPDATE categories SET ${fields.join(', ')} WHERE id = $${paramIndex}
-       RETURNING *`,
+      `UPDATE categories SET ${fields.join(', ')} WHERE id = $${paramIndex} RETURNING *`,
       values
     );
 
@@ -85,10 +58,15 @@ export const categoryRepository = {
   },
 
   async delete(id) {
-    const result = await query(
-      'DELETE FROM categories WHERE id = $1 RETURNING id',
-      [id]
-    );
+    const result = await query('DELETE FROM categories WHERE id = $1 RETURNING id', [id]);
     return result.rowCount > 0;
+  },
+
+  async countProductsByCategory(categoryId) {
+    const result = await query(
+      'SELECT COUNT(*) as count FROM products WHERE category_id = $1',
+      [categoryId]
+    );
+    return parseInt(result.rows[0].count, 10);
   },
 };
