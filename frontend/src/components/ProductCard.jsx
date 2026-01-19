@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { ShoppingCart } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
-import { cartApi } from '../lib/api';
+import { cartApi, getImageUrl, PLACEHOLDER_IMAGE } from '../lib/api';
 import { useAuthStore } from '../store/authStore';
 import { useCartStore } from '../store/cartStore';
 
@@ -37,7 +37,7 @@ export default function ProductCard({ product }) {
       <Link to={`/products/${product.id}`}>
         <div className="aspect-square bg-gray-100">
           <img
-            src={product.imageUrl || 'https://via.placeholder.com/300x300?text=No+Image'}
+            src={getImageUrl(product.imageUrl) || PLACEHOLDER_IMAGE}
             alt={product.name}
             className="w-full h-full object-cover"
           />

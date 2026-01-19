@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Upload, X, Image as ImageIcon } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { productsApi, categoriesApi } from '../lib/api';
+import { productsApi, categoriesApi, getImageUrl } from '../lib/api';
+import { IMAGE_CONSTRAINTS } from '../../../shared/constants';
 import LoadingSpinner from '../components/LoadingSpinner';
 
 export default function ProductForm() {
@@ -11,6 +12,7 @@ export default function ProductForm() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const isEditing = Boolean(id);
+  const fileInputRef = useRef(null);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -18,9 +20,13 @@ export default function ProductForm() {
     price: '',
     stockQuantity: '',
     categoryId: '',
-    imageUrl: '',
     isActive: true,
   });
+
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
+  const [existingImage, setExistingImage] = useState(null);
+  const [removeImage, setRemoveImage] = useState(false);
 
   const { data: productData, isLoading: productLoading } = useQuery({
     queryKey: ['product', id],
@@ -42,9 +48,11 @@ export default function ProductForm() {
         price: String(product.price),
         stockQuantity: String(product.stockQuantity),
         categoryId: product.categoryId || '',
-        imageUrl: product.imageUrl || '',
         isActive: product.isActive,
       });
+      if (product.imageUrl) {
+        setExistingImage(product.imageUrl);
+      }
     }
   }, [productData]);
 
@@ -79,15 +87,38 @@ export default function ProductForm() {
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    const data = {
-      name: formData.name,
-      description: formData.description || undefined,
-      price: parseFloat(formData.price),
-      stockQuantity: parseInt(formData.stockQuantity, 10),
-      categoryId: formData.categoryId || undefined,
-      imageUrl: formData.imageUrl || undefined,
-      isActive: formData.isActive,
-    };
+    const price = parseFloat(formData.price);
+    if (isNaN(price) || price < 1) {
+      toast.error('Price must be a positive number');
+      return;
+    }
+
+    const stockQty = parseInt(formData.stockQuantity, 10);
+    if (isNaN(stockQty) || stockQty < 1) {
+      toast.error('Stock quantity must be a non-negative number');
+      return;
+    }
+
+    if (!formData.name.trim()) {
+      toast.error('Product name is required');
+      return;
+    }
+
+    const data = new FormData();
+    data.append('name', formData.name);
+    data.append('description', formData.description || '');
+    data.append('price', formData.price);
+    data.append('stockQuantity', formData.stockQuantity);
+    data.append('categoryId', formData.categoryId || '');
+    data.append('isActive', formData.isActive);
+
+    if (imageFile) {
+      data.append('image', imageFile);
+    }
+
+    if (removeImage) {
+      data.append('removeImage', 'true');
+    }
 
     if (isEditing) {
       updateMutation.mutate(data);
@@ -103,6 +134,56 @@ export default function ProductForm() {
       [name]: type === 'checkbox' ? checked : value,
     }));
   };
+
+  const handleImageChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > IMAGE_CONSTRAINTS.MAX_SIZE) {
+      toast.error('Image size must be less than 5MB');
+      return;
+    }
+
+    if (!IMAGE_CONSTRAINTS.ALLOWED_TYPES.includes(file.type)) {
+      toast.error('Only JPEG, PNG, GIF, and WebP images are allowed');
+      return;
+    }
+
+    setImageFile(file);
+    setRemoveImage(false);
+
+    const reader = new FileReader();
+    reader.onloadend = () => setImagePreview(reader.result);
+    reader.readAsDataURL(file);
+  };
+
+  const resetFileInput = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setImageFile(null);
+    setImagePreview(null);
+    setRemoveImage(true);
+    resetFileInput();
+  };
+
+  const handleCancelNewImage = () => {
+    setImageFile(null);
+    setImagePreview(null);
+    setRemoveImage(false);
+    resetFileInput();
+  };
+
+  const getImageSrc = () => {
+    if (imagePreview) return imagePreview;
+    if (!removeImage && existingImage) return getImageUrl(existingImage);
+    return null;
+  };
+
+  const currentImage = getImageSrc();
 
   if (isEditing && productLoading) {
     return (
@@ -128,12 +209,8 @@ export default function ProductForm() {
 
       <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-sm p-6">
         <div className="space-y-6">
-          {/* Name */}
           <div>
-            <label
-              htmlFor="name"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
+            <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
               Name *
             </label>
             <input
@@ -147,12 +224,8 @@ export default function ProductForm() {
             />
           </div>
 
-          {/* Description */}
           <div>
-            <label
-              htmlFor="description"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
+            <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
               Description
             </label>
             <textarea
@@ -165,13 +238,9 @@ export default function ProductForm() {
             />
           </div>
 
-          {/* Price and Stock */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label
-                htmlFor="price"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
+              <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-1">
                 Price *
               </label>
               <input
@@ -188,10 +257,7 @@ export default function ProductForm() {
             </div>
 
             <div>
-              <label
-                htmlFor="stockQuantity"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
+              <label htmlFor="stockQuantity" className="block text-sm font-medium text-gray-700 mb-1">
                 Stock Quantity *
               </label>
               <input
@@ -207,12 +273,8 @@ export default function ProductForm() {
             </div>
           </div>
 
-          {/* Category */}
           <div>
-            <label
-              htmlFor="categoryId"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
+            <label htmlFor="categoryId" className="block text-sm font-medium text-gray-700 mb-1">
               Category
             </label>
             <select
@@ -231,26 +293,58 @@ export default function ProductForm() {
             </select>
           </div>
 
-          {/* Image URL */}
           <div>
-            <label
-              htmlFor="imageUrl"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Image URL
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Product Image</label>
+
+            {currentImage ? (
+              <div className="relative inline-block">
+                <img
+                  src={currentImage}
+                  alt="Product preview"
+                  className="w-40 h-40 object-cover rounded-lg border border-gray-200"
+                />
+                <button
+                  type="button"
+                  onClick={imagePreview ? handleCancelNewImage : handleRemoveImage}
+                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+                {imagePreview && existingImage && (
+                  <p className="text-xs text-green-600 mt-1">New image selected</p>
+                )}
+              </div>
+            ) : (
+              <div
+                onClick={() => fileInputRef.current?.click()}
+                className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-indigo-500 hover:bg-indigo-50 transition-colors"
+              >
+                <ImageIcon className="h-12 w-12 mx-auto text-gray-400 mb-2" />
+                <p className="text-sm text-gray-600">Click to upload image</p>
+                <p className="text-xs text-gray-400 mt-1">JPEG, PNG, GIF, WebP up to 5MB</p>
+              </div>
+            )}
+
             <input
-              type="url"
-              id="imageUrl"
-              name="imageUrl"
-              value={formData.imageUrl}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              placeholder="https://example.com/image.jpg"
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
+              onChange={handleImageChange}
+              className="hidden"
             />
+
+            {currentImage && (
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="mt-2 text-sm text-indigo-600 hover:text-indigo-700 flex items-center gap-1"
+              >
+                <Upload className="h-4 w-4" />
+                Change image
+              </button>
+            )}
           </div>
 
-          {/* Active Status */}
           <div className="flex items-center gap-2">
             <input
               type="checkbox"
@@ -267,10 +361,7 @@ export default function ProductForm() {
         </div>
 
         <div className="flex justify-end gap-3 mt-6 pt-6 border-t">
-          <Link
-            to="/products"
-            className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg"
-          >
+          <Link to="/products" className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg">
             Cancel
           </Link>
           <button

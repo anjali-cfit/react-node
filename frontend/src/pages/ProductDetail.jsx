@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ShoppingCart, Minus, Plus, ArrowLeft } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { productsApi, cartApi } from '../lib/api';
+import { productsApi, cartApi, getImageUrl, PLACEHOLDER_IMAGE } from '../lib/api';
 import { useAuthStore } from '../store/authStore';
 import { useCartStore } from '../store/cartStore';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -84,7 +84,7 @@ export default function ProductDetail() {
           <div className="md:w-1/2">
             <div className="aspect-square bg-gray-100">
               <img
-                src={product.imageUrl || 'https://via.placeholder.com/600x600?text=No+Image'}
+                src={getImageUrl(product.imageUrl) || PLACEHOLDER_IMAGE}
                 alt={product.name}
                 className="w-full h-full object-cover"
               />

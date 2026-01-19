@@ -5,6 +5,8 @@ import Products from './pages/Products';
 import ProductDetail from './pages/ProductDetail';
 import Cart from './pages/Cart';
 import Checkout from './pages/Checkout';
+import PaymentSuccess from './pages/PaymentSuccess';
+import PaymentCancel from './pages/PaymentCancel';
 import Orders from './pages/Orders';
 import OrderDetail from './pages/OrderDetail';
 import Login from './pages/Login';
@@ -26,6 +28,8 @@ function App() {
         <Route element={<ProtectedRoute />}>
           <Route path="cart" element={<Cart />} />
           <Route path="checkout" element={<Checkout />} />
+          <Route path="payment/success" element={<PaymentSuccess />} />
+          <Route path="payment/cancel" element={<PaymentCancel />} />
           <Route path="orders" element={<Orders />} />
           <Route path="orders/:id" element={<OrderDetail />} />
           <Route path="profile" element={<Profile />} />

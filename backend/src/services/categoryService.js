@@ -51,6 +51,14 @@ export const categoryService = {
       throw ApiError.notFound('Category not found');
     }
 
+    // Check if category has associated products
+    const productCount = await categoryRepository.countProductsByCategory(id);
+    if (productCount > 0) {
+      throw ApiError.badRequest(
+        `Cannot delete category. It is assigned to ${productCount} product${productCount > 1 ? 's' : ''}. Please reassign or delete those products first.`
+      );
+    }
+
     await categoryRepository.delete(id);
     return { message: 'Category deleted successfully' };
   },

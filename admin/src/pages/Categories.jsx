@@ -50,6 +50,7 @@ export default function Categories() {
     },
     onError: (error) => {
       toast.error(error.response?.data?.message || 'Failed to delete category');
+      setDeleteId(null);
     },
   });
 
@@ -259,8 +260,7 @@ export default function Categories() {
               Delete Category
             </h2>
             <p className="text-gray-600 mb-6">
-              Are you sure you want to delete this category? Products in this
-              category will become uncategorized.
+              Are you sure you want to delete this category? This action cannot be undone.
             </p>
             <div className="flex justify-end gap-3">
               <button

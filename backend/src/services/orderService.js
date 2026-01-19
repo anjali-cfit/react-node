@@ -76,7 +76,7 @@ export const orderService = {
   },
 
   async updateOrderStatus(orderId, status) {
-    const validStatuses = ['pending', 'processing', 'shipped', 'delivered', 'cancelled'];
+    const validStatuses = ['pending', 'pending_payment', 'processing', 'shipped', 'delivered', 'cancelled'];
     if (!validStatuses.includes(status)) {
       throw ApiError.badRequest(`Invalid status. Must be one of: ${validStatuses.join(', ')}`);
     }

@@ -7,7 +7,20 @@
       "Bash(node:*)",
       "Bash(npm run db:migrate:*)",
       "Bash(npm run db:seed:*)",
-      "Bash(npm run dev:*)"
+      "Bash(npm run dev:*)",
+      "Bash(npm run build:*)",
+      "Bash(pnpm add:*)",
+      "Bash(pnpm install:*)",
+      "Bash(npm install:*)",
+      "Bash(pnpm --version:*)",
+      "Bash(dir:*)",
+      "Bash(ls:*)",
+      "Bash(npm:*)",
+      "Bash(cmd.exe /c:*)",
+      "Bash(pushd:*)",
+      "Bash(popd)",
+      "Bash(echo:*)",
+      "Bash(PGPASSWORD=123456 psql:*)"
     ]
   }
 }

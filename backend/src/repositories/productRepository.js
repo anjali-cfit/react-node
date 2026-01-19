@@ -1,5 +1,17 @@
 import { query } from '../config/database.js';
 import { v4 as uuidv4 } from 'uuid';
+import { buildPagination, buildPaginationResponse, buildUpdateFields } from '../utils/repositoryHelpers.js';
+
+// Field mapping for product updates
+const PRODUCT_FIELD_MAP = {
+  name: 'name',
+  description: 'description',
+  price: 'price',
+  stockQuantity: 'stock_quantity',
+  categoryId: 'category_id',
+  imageUrl: 'image_url',
+  isActive: 'is_active',
+};
 
 export const productRepository = {
   async create(productData) {
@@ -28,25 +40,15 @@ export const productRepository = {
   },
 
   async findAll(options = {}) {
-    const {
-      page = 1,
-      limit = 10,
-      categoryId,
-      minPrice,
-      maxPrice,
-      search,
-      sortBy = 'created_at',
-      sortOrder = 'DESC',
-      includeInactive = false,
-    } = options;
+    const { page, limit, offset } = buildPagination(options);
+    const { categoryId, minPrice, maxPrice, search, sortBy = 'created_at', sortOrder = 'DESC', includeInactive = false } = options;
 
-    const offset = (page - 1) * limit;
     const params = [];
     const conditions = [];
     let paramIndex = 1;
 
     if (!includeInactive) {
-      conditions.push(`p.is_active = true`);
+      conditions.push('p.is_active = true');
     }
 
     if (categoryId) {
@@ -77,80 +79,32 @@ export const productRepository = {
     const sortField = allowedSortFields.includes(sortBy) ? sortBy : 'created_at';
     const order = sortOrder.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
 
-    const queryText = `
-      SELECT p.*, c.name as category_name
-      FROM products p
-      LEFT JOIN categories c ON p.category_id = c.id
-      ${whereClause}
-      ORDER BY p.${sortField} ${order}
-      LIMIT $${paramIndex++} OFFSET $${paramIndex++}
-    `;
-
     params.push(limit, offset);
 
-    const result = await query(queryText, params);
+    const result = await query(
+      `SELECT p.*, c.name as category_name
+       FROM products p
+       LEFT JOIN categories c ON p.category_id = c.id
+       ${whereClause}
+       ORDER BY p.${sortField} ${order}
+       LIMIT $${paramIndex++} OFFSET $${paramIndex}`,
+      params
+    );
 
-    // Get total count
-    const countParams = params.slice(0, -2);
-    const countQuery = `
-      SELECT COUNT(*) FROM products p
-      ${whereClause}
-    `;
-
-    const countResult = await query(countQuery, countParams);
+    const countResult = await query(
+      `SELECT COUNT(*) FROM products p ${whereClause}`,
+      params.slice(0, -2)
+    );
     const total = parseInt(countResult.rows[0].count, 10);
 
     return {
       products: result.rows,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-      },
+      pagination: buildPaginationResponse(total, page, limit),
     };
   },
 
   async update(id, productData) {
-    const { name, description, price, stockQuantity, categoryId, imageUrl, isActive } = productData;
-    const fields = [];
-    const values = [];
-    let paramIndex = 1;
-
-    if (name !== undefined) {
-      fields.push(`name = $${paramIndex++}`);
-      values.push(name);
-    }
-
-    if (description !== undefined) {
-      fields.push(`description = $${paramIndex++}`);
-      values.push(description);
-    }
-
-    if (price !== undefined) {
-      fields.push(`price = $${paramIndex++}`);
-      values.push(price);
-    }
-
-    if (stockQuantity !== undefined) {
-      fields.push(`stock_quantity = $${paramIndex++}`);
-      values.push(stockQuantity);
-    }
-
-    if (categoryId !== undefined) {
-      fields.push(`category_id = $${paramIndex++}`);
-      values.push(categoryId);
-    }
-
-    if (imageUrl !== undefined) {
-      fields.push(`image_url = $${paramIndex++}`);
-      values.push(imageUrl);
-    }
-
-    if (isActive !== undefined) {
-      fields.push(`is_active = $${paramIndex++}`);
-      values.push(isActive);
-    }
+    const { fields, values, paramIndex } = buildUpdateFields(productData, PRODUCT_FIELD_MAP);
 
     if (fields.length === 0) {
       return this.findById(id);
@@ -159,8 +113,7 @@ export const productRepository = {
     values.push(id);
 
     const result = await query(
-      `UPDATE products SET ${fields.join(', ')} WHERE id = $${paramIndex}
-       RETURNING *`,
+      `UPDATE products SET ${fields.join(', ')} WHERE id = $${paramIndex} RETURNING *`,
       values
     );
 
@@ -178,10 +131,7 @@ export const productRepository = {
   },
 
   async delete(id) {
-    const result = await query(
-      'DELETE FROM products WHERE id = $1 RETURNING id',
-      [id]
-    );
+    const result = await query('DELETE FROM products WHERE id = $1 RETURNING id', [id]);
     return result.rowCount > 0;
   },
 };
