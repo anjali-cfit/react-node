@@ -17,7 +17,6 @@ const initDatabase = async () => {
 
   try {
     await adminClient.connect();
-    console.log('Connected to PostgreSQL');
 
     // Check if database exists
     const dbName = process.env.DB_NAME || 'ecommerce_db';
@@ -29,14 +28,10 @@ const initDatabase = async () => {
     if (result.rows.length === 0) {
       // Create database
       await adminClient.query(`CREATE DATABASE ${dbName}`);
-      console.log(`Database '${dbName}' created successfully`);
-    } else {
-      console.log(`Database '${dbName}' already exists`);
     }
 
   } catch (error) {
     if (error.code === '42P04') {
-      console.log('Database already exists');
     } else {
       console.error('Error:', error.message);
       process.exit(1);

@@ -18,7 +18,6 @@ const seed = async () => {
 
   try {
     await client.connect();
-    console.log('Connected to PostgreSQL database');
 
     // Hash passwords
     const adminPassword = await bcrypt.hash('admin123', 12);
@@ -40,7 +39,6 @@ const seed = async () => {
       ON CONFLICT (email) DO NOTHING
     `, [customerId, 'customer@example.com', customerPassword, 'John', 'Doe', 'customer']);
 
-    console.log('Users seeded successfully');
 
     // Create categories
     const categories = [
@@ -59,7 +57,6 @@ const seed = async () => {
       `, [category.id, category.name, category.description]);
     }
 
-    console.log('Categories seeded successfully');
 
     // Get category IDs
     const categoryResult = await client.query('SELECT id, name FROM categories');
@@ -159,19 +156,11 @@ const seed = async () => {
       `, [product.name, product.description, product.price, product.stockQuantity, product.categoryId, product.imageUrl]);
     }
 
-    console.log('Products seeded successfully');
-    console.log('\n--- Seed Data Summary ---');
-    console.log('Admin User: admin@example.com / admin123');
-    console.log('Customer User: customer@example.com / customer123');
-    console.log(`Categories: ${categories.length}`);
-    console.log(`Products: ${products.length}`);
-
   } catch (error) {
     console.error('Seeding failed:', error.message);
     process.exit(1);
   } finally {
     await client.end();
-    console.log('\nDatabase connection closed');
   }
 };
 

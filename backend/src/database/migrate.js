@@ -22,7 +22,6 @@ const migrate = async () => {
 
   try {
     await client.connect();
-    console.log('Connected to PostgreSQL database');
 
     // Read schema file
     const schemaPath = path.join(__dirname, 'schema.sql');
@@ -30,14 +29,12 @@ const migrate = async () => {
 
     // Execute schema
     await client.query(schema);
-    console.log('Database schema applied successfully');
 
   } catch (error) {
     console.error('Migration failed:', error.message);
     process.exit(1);
   } finally {
     await client.end();
-    console.log('Database connection closed');
   }
 };
 

@@ -39,13 +39,10 @@ export default function Checkout() {
     setIsProcessing(true);
 
     try {
-      console.log('Creating checkout session with address:', shippingAddress);
       const response = await paymentApi.createCheckoutSession(shippingAddress);
-      console.log('Checkout response:', response);
       const sessionUrl = response?.data?.data?.sessionUrl;
 
       if (sessionUrl) {
-        console.log('Redirecting to Stripe:', sessionUrl);
         window.location.href = sessionUrl;
       } else {
         console.error('No sessionUrl in response:', response?.data);
